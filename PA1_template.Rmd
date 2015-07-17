@@ -1,25 +1,102 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
-
+COURSERA Reproducible Research Project 1 Gregory Verleysen
+========================================================
 
 ## Loading and preprocessing the data
+### Load the data
+```{r}
+setwd("~/COURSERA/Reproducible research/Project1")
 
-
+data<-read.csv("activity.csv")
+data2<-na.omit(data)
+```
 
 ## What is mean total number of steps taken per day?
+### Calculate the total number of steps taken per day
+```{r}
+TotalSteps<-as.vector(by(data2$steps,data2$date,sum))
+print(TotalSteps)
+```
 
+### Make a histogram of the total number of steps taken each day
+```{r}
+hist(TotalSteps)
+```
 
+### Calculate and report the mean and median of the total number of steps taken per day
+```{r}
+mean(TotalSteps,na.rm=TRUE)
+median(TotalSteps,na.rm=TRUE)
+```
 
 ## What is the average daily activity pattern?
+### Make a time series plot of the 5-minute interval and the average number of steps taken, averaged across all days
 
+calculate mean
+```{r}
+adap<-aggregate(data2$steps,list(data2$interval),mean)
+print(adap)
+```
 
+plot mean
+```{r}
+plot(adap,type="l")
+```
+
+### Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+```{r}
+adap[which.max(adap$x),1]
+```
 
 ## Imputing missing values
+### Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)
+```{r}
+length(which(is.na(data)))
+```
 
+### Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
+```{r}
+means<-rep(adap$x,length(unique(data$date)))
+```
 
+### Create a new dataset that is equal to the original dataset but with the missing data filled in.
+```{r}
+data3<-data
+
+for(i in 1:length(data3$steps)){
+  if(is.na(data3$steps[i])) data3$steps[i] <- means[i]
+}
+```
+
+### Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+```{r}
+TotalSteps2<-as.vector(by(data3$steps,data3$date,sum))
+hist(TotalSteps2)
+```
+### Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+In the imputed version the missing values have been replcaed by interval means. So there is a noticeable difference.
+
+mean and median
+```{r}
+mean(TotalSteps2)
+median(TotalSteps2)
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+### Create a new factor variable in the dataset with two levels - "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
+```{r}
+thedate<-as.Date(data3$date)
+data3$day <- weekdays(as.Date(data3$date))
+data3$daytype<-ifelse(data3$day %in% c("maandag","dinsdag","woensdag","donderdag","vrijdag"),"weekday","weekend")
+```
+
+### Make a panel plot containing a time series plot of the 5-minute interval and the average number of steps taken, averaged across all weekday days or weekend days. 
+```{r}
+library(lattice)
+meanstep <- aggregate(steps ~ interval + daytype, data=data3, mean)
+xyplot(steps  ~ interval|daytype, superpose=TRUE, aspect="xy", data = meanstep,type="l")
+```
+
+
+
+
+
